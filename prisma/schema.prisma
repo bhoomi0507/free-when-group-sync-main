@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Plan {
+  id              String        @id @default(uuid())
+  title           String
+  ownerName       String
+  ownerKeyHash    String
+  token           String        @unique
+  durationMinutes Int
+  rangeStart      DateTime
+  rangeEnd        DateTime
+  finalizedStart  DateTime?
+  finalizedEnd    DateTime?
+  finalizedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  participants    Participant[]
+
+  @@index([token])
+}
+
+model Participant {
+  id               String             @id @default(uuid())
+  planId           String
+  name             String
+  joinedAt         DateTime           @default(now())
+  lastActiveAt     DateTime           @default(now())
+  plan             Plan               @relation(fields: [planId], references: [id], onDelete: Cascade)
+  availabilitySlots AvailabilitySlot[]
+
+  @@unique([planId, name])
+  @@index([planId])
+}
+
+model AvailabilitySlot {
+  id            String      @id @default(uuid())
+  participantId String
+  slotTime      DateTime
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@unique([participantId, slotTime])
+  @@index([participantId])
+  @@index([slotTime])
+}
